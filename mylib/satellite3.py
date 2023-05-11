@@ -3,91 +3,166 @@ from threading import Thread, Lock, Timer
 from mylib.osc_client import osc_client
 from copy import copy
 
-
-# サテライトの情報を取得・保持・更新するクラス
 class Satellite:
-
+    """
+    サテライトを初期化し、情報を保持するクラス
+    """
     SENDER_R = 0.01
     RECEIVER_R = 3.0
 
-    def __init__(self, index: int) -> None:
-        self.is_initializing = Lock()
-        self.initialize_movement_lock = Lock()
-        self.get_distance_lock = Lock()
-        self.get_distance_lock.acquire()
-        self.is_satellite_active = True
+    def __init__(self, index, position) -> None:
+        # Lockオブジェクト
+        self.__is_initializing = Lock()
+        self.__get_distance_lock = Lock()
+        self.__get_distance_lock.acquire()
+
+        # サテライトがアクティブであることを示すフラグ
+        self.__del_is_not_called = True
 
         # サテライトの情報
-        self.index = index
-        self.contacts = [0.0, 0.0]
-        self.movement = 0.0
-        # OSCの送受信
-        self.client = osc_client()
-        self.movement_address = f"/avatar/parameters/VPS/sat_{self.index}/movement"
-        self.contact_address = [
+        self.__index = index
+        self.__movement = 0.0
+        self.__contacts = [0.0, 0.0]
+        self.__position = position # サテライトの座標
+
+        # OSCの送受信関連
+        self.__client = osc_client()
+        self.__movement_address = f"/avatar/parameters/VPS/sat_{self.index}/movement"
+        self.__contact_address = [
             f"/avatar/parameters/VPS/sat_{self.index}/contact_0",
             f"/avatar/parameters/VPS/sat_{self.index}/contact_1"
         ]
 
-        # レシーバーの位置の初期化
-        self.client.send_message(self.movement_address, 0)
-        th0 = Thread(target=self.__receiver_initialize, daemon=True)
-        th0.start()
-
-        th1 = Thread(target=self.__process_contacts, args=(th0, ), daemon=True)
-        th1.start()
-
     def __del__(self):
-        self.is_satellite_active = False
-        print(f"sat{self.index} destructor is called")
+        self.del_is_not_called = False
+        print(f"satellite{self.index} destructor called.")
+
+    @property
+    def is_initializing(self):
+        return self.__is_initializing
+    
+    @property
+    def get_distance_lock(self):
+        return self.__get_distance_lock
+
+    @property
+    def del_is_not_called(self):
+        return self.__del_is_not_called
+
+    @del_is_not_called.setter
+    def del_is_not_called(self, flag: bool):
+        if isinstance(flag, bool):
+            self.__del_is_not_called = flag
+        else:
+            raise ValueError
+
+    @property
+    def index(self):
+        return self.__index
+
+    @property
+    def movement(self):
+        return self.__movement
+
+    @property
+    def contacts(self):
+        return self.__contacts
+    
+    @property
+    def position(self):
+        return self.__position
+
+    @property
+    def client(self):
+        return self.__client
+
+    @property
+    def movement_address(self):
+        return self.__movement_address
+
+    @property
+    def contacts_address(self):
+        return self.__contact_address
+
+    def start_automatic_control(self):
+        """
+        サテライトの自動制御を開始する関数
+        """
+        th_init = Thread(target=self.__init_receiver)
+        th_process_contacts = Thread(target=self.__process_contacts)
+
+        th_init.start()
+        th_process_contacts.start()
+
+    def __init_receiver(self) -> None:
+        """
+        レシーバーを0~1000 mの範囲で動かし、
+        プレイヤーにぶつかった(self.is_initializing.locked()==False)ら終了する
+        すでに初期化が行われている場合は初期化を行わない()
+        """
+        ret = self.is_initializing.acquire(timeout=1)
+        if not ret:
+            return
+
+        sleep(1)
+
+        m = 0.0
+        while self.is_initializing.locked() and self.del_is_not_called:
+            message = m / 1000
+            self.client.send_message(self.movement_address, message)
+            sleep(0.1)
+            m += Satellite.RECEIVER_R / 2
+
+            if m > 1000:
+                m = 0
+        return
+
+    def osc_handler(self, address, *args):
+        """
+        受信したOSC信号に対し、処理を振り分ける関数
+        :param address: osc address
+        :param args: osc signal
+        """
+
+        @movement.setter
+        def movement(movement: float):
+            self.__movement = movement
+
+        @contacts.setter
+        def contacts(contacts: list[float]):
+            self.__contacts = contacts
+
+        def __is_init_finished(contact1: float):
+            """
+            receiverの初期化が終了したか判定し、Lockをリリースする
+            :param contact1: contact1の値
+            """
+            if self.is_initializing.locked():
+                if contact1 > 0:
+                    self.is_initializing.release()
+
+        # 受信した値でインスタンス変数を更新する
+        if address == self.movement_address:
+            self.movement = args[0] * 1000
+        elif address == self.contacts_address[0]:
+            self.contacts[0] = args[0]
+        elif address == self.contacts_address[1]:
+            self.contacts[1] = args[0]
+            __is_init_finished(args[0])
 
     def get_distance(self):
         ret = self.get_distance_lock.acquire(timeout=0.02)
         if not ret:
             return None
         else:
-            return self.__calc_distances(copy(self.contacts), copy(self.movement))
+            return self.__calc_distance(copy(self.contacts), copy(self.movement))
 
-
-    def __receiver_initialize(self):
-        ret = self.is_initializing.acquire(timeout=3)
-        if not ret:
-            return
-
-        sleep(2)
-
-        m = 0.0
-        while self.is_initializing.locked():
-            message = m / 1000
-            self.client.send_message(self.movement_address, message)
-
-            # self.initialize_movement_lock.acquire()
-
-            sleep(0.1)
-
-            m += Satellite.RECEIVER_R / 2
-
-            if m > 500:
-                m = 0
-
-    # OSCの受信処理
-    def osc_handler(self, address, arg):
-        if address == self.movement_address:
-            self.movement = arg * 1000
-
-            # if self.initialize_movement_lock.locked():
-                # self.initialize_movement_lock.release()
-
-        elif address == self.contact_address[0]:
-            self.contacts[0] = arg
-        elif address == self.contact_address[1]:
-            self.contacts[1] = arg
-            
-            if self.is_initializing.locked() and arg > 0:
-                self.is_initializing.release()
-
-    def __calc_distances(self, contacts, movement):
-
+    @staticmethod
+    def __calc_distance(movement: float, contacts: list[float]) -> float:
+        """
+        サテライトからプレイヤーまでの距離を計算する
+        計算途中に値が書き換えられるのは困るのでStatic Methoadにする
+        """
         if contacts[0] > 0 and contacts[1] > 0:
             distance = movement + (1 - contacts[1]) * Satellite.RECEIVER_R + Satellite.SENDER_R
 
@@ -102,13 +177,11 @@ class Satellite:
 
         return distance
 
-
-    # コンタクトの値を評価する
-    def __process_contacts(self, initializing_thread: Thread):
-
-        initializing_thread.join()
-
-        while self.is_satellite_active:
+    def __process_contacts(self):
+        """
+        0.01秒ごとにcontactsの値を評価する関数
+        """
+        while self.__del_is_not_called:
             # サテライトが初期化中の時はdistanceを取得させない
             if self.is_initializing.locked():
                 if not self.get_distance_lock.locked():
@@ -132,12 +205,12 @@ class Satellite:
                 else:
                     if not self.get_distance_lock.locked():
                         self.get_distance_lock.acquire()
-                    th = Thread(target=self.__receiver_initialize, daemon=True)
+                    th = Thread(target=self.__init_receiver, daemon=True)
                     th.start()
                     th.join()
 
             sleep(0.01)
-
+    
     def __move_receiver_out(self):
         m = (self.movement + Satellite.RECEIVER_R / 2) / 1000
         self.client.send_message(self.movement_address, m)
