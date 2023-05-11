@@ -2,7 +2,6 @@ import argparse
 from pythonosc import dispatcher
 from pythonosc import osc_server
 from mylib.positioning_system import PositioningSystem
-from mylib import plot_graph
 
 
 # OSCサーバーを起動する
@@ -15,8 +14,7 @@ def launch_osc_server(positioning_system: PositioningSystem):
 
     dpt = dispatcher.Dispatcher()
 
-    positioning_system.dpt_map(dpt)
-    # dpt.map("/avatar/parameters/VPS/sat_1/*", print)
+    dpt.map("/avatar/parameters/VPS", positioning_system.pys_switch, dpt)
 
     server = osc_server.ThreadingOSCUDPServer((args.ip, args.port), dpt)
     print("Serving on {}".format(server.server_address))

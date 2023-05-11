@@ -22,7 +22,7 @@ class Satellite:
         # サテライトの情報
         self.__index = index
         self.__movement = 0.0
-        self.__contacts = [0.0, 0.0]
+        self.contacts = [0.0, 0.0]
         self.__position = position # サテライトの座標
 
         # OSCの送受信関連
@@ -32,6 +32,8 @@ class Satellite:
             f"/avatar/parameters/VPS/sat_{self.index}/contact_0",
             f"/avatar/parameters/VPS/sat_{self.index}/contact_1"
         ]
+
+        self.start_automatic_control()
 
     def __del__(self):
         self.del_is_not_called = False
@@ -63,10 +65,6 @@ class Satellite:
     @property
     def movement(self):
         return self.__movement
-
-    @property
-    def contacts(self):
-        return self.__contacts
     
     @property
     def position(self):
@@ -124,14 +122,6 @@ class Satellite:
         :param args: osc signal
         """
 
-        @movement.setter
-        def movement(movement: float):
-            self.__movement = movement
-
-        @contacts.setter
-        def contacts(contacts: list[float]):
-            self.__contacts = contacts
-
         def __is_init_finished(contact1: float):
             """
             receiverの初期化が終了したか判定し、Lockをリリースする
@@ -143,7 +133,7 @@ class Satellite:
 
         # 受信した値でインスタンス変数を更新する
         if address == self.movement_address:
-            self.movement = args[0] * 1000
+            self.__movement = args[0] * 1000
         elif address == self.contacts_address[0]:
             self.contacts[0] = args[0]
         elif address == self.contacts_address[1]:

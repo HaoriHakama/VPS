@@ -80,11 +80,11 @@ class PositioningSystem:
         self.is_mesuring = False
         self.datalist: DataList = None
 
-    def pys_switch(self, address: str, dpt: dispatcher.Dispatcher, *args: list[bool]):
+    def pys_switch(self, address: str, dpt: list[dispatcher.Dispatcher], *args: list[bool]):
         """
         positioning systemを起動/終了するosc_handler
         """
-        if address != "/avatar/parameters/PYS":
+        if address != "/avatar/parameters/VPS":
             raise ValueError
 
         if not isinstance(args[0], bool):
@@ -92,7 +92,7 @@ class PositioningSystem:
 
         if args[0] == True:
             self.is_mesuring = True
-            self.start_mesurement(dpt)
+            self.start_mesurement(dpt[0])
         else: # args[0] == False:
             self.is_mesuring = False
 
@@ -114,7 +114,8 @@ class PositioningSystem:
                 sleep(1)
 
         # when mesurement finish!
-        save_data(self.datalist)
+        if len(self.datalist.datalist) > 0:
+            save_data(self.datalist)
         self.datalist = None
         del_osc_handler(len(satellites), dpt)
         del_satellites(satellites)
@@ -152,6 +153,7 @@ def set_satellites_osc_handler(satellites: list[Satellite], dpt: dispatcher.Disp
     for i in range(len(satellites)):
         address = f"/avatar/parameters/VPS/sat_{i}/*"
         func = satellites[i].osc_handler
+        print(type(dpt))
         dpt.map(address, func)
 
 def init_satellites() -> list[Satellite]:
@@ -164,7 +166,7 @@ def init_satellites() -> list[Satellite]:
         [0, 0, 50],
         [0, 0, -50]
     ]
-    for i in range(POS_SATELLITES):
+    for i in range(len(POS_SATELLITES)):
         satellites.append(Satellite(i, POS_SATELLITES[i]))
 
     return satellites
@@ -232,15 +234,18 @@ def __get_sat_data(satellites: Satellite):
     pos_satellite, distances = format_data(satellites, results)
     return pos_satellite, distances
 
-def __calc_position(pos_satellites: list[float], distances: list[float]) -> tuple(bool, list[Optional[float]]):
+def __calc_position(pos_satellites: list[float], distances: list[float]):
     """
     サテライトの座標と各座標からの距離から、プレイヤーの座標を計算する関数
     :param positions: サテライトの座標
     :param distances: サテライトの距離
     :return:
     """
-    if len(pos_satellites) != len(distances) or len(pos_satellites) < 4:
-        raise ValueError
+    try:
+        if len(pos_satellites) != len(distances) or len(pos_satellites) < 4:
+            raise ValueError
+    except ValueError:
+        return False, [None, None, None]
 
     LIMIT = 0.00000001
 
