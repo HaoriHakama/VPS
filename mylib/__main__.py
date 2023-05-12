@@ -1,8 +1,6 @@
 import matplotlib
 matplotlib.use("TkAgg")
 import matplotlib.figure
-import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation
 from mylib.launch_osc_server import launch_osc_server
 from mylib.plot_graph import PlotGraph
 from mylib.positioning_system import PositioningSystem

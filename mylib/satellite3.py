@@ -1,5 +1,5 @@
 from time import sleep
-from threading import Thread, Lock, Timer
+from threading import Thread, Lock
 from mylib.osc_client import osc_client
 from copy import copy
 
