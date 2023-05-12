@@ -1,4 +1,3 @@
-from mylib.calc_position import CalcPosition
 from pythonosc import dispatcher
 from datetime import datetime
 import json
