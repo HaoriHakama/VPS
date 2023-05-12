@@ -48,18 +48,12 @@ class DataList:
         self.__datalist.append(data)
 
     def x_data(self):
-        if len(self.__datalist) == 0:
-            return None
         return [data.position[0] for data in self.__datalist]
 
     def y_data(self):
-        if len(self.__datalist) == 0:
-            return None
         return [data.position[1] for data in self.__datalist]
 
     def z_data(self):
-        if len(self.__datalist) == 0:
-            return None
         return [data.position[2] for data in self.__datalist]
 
 
