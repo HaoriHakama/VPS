@@ -20,7 +20,7 @@ class PositionData:
     座標はfloat 3桁でなければならない
     """
     position: list[float]
-    time: datetime = datetime.now().strftime("%Y%m%d%H%M%S")
+    time: str = datetime.now().strftime("%Y%m%d%H%M%S")
 
     def __post_init__(self):
         if not isinstance(self.position, list) or len(self.position) != 3:
