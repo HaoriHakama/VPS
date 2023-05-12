@@ -65,7 +65,7 @@ class PositioningSystem:
     def __init__(self) -> None:
         self.is_mesuring = False
         self.datalist: DataList = None
-        self.satellite: list[Satellite]
+        self.satellites: list[Satellite] = []
 
     def pys_switch(self,
                    address: str,
