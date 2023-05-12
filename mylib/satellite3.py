@@ -1,7 +1,9 @@
-from time import sleep
-from threading import Thread, Lock, Timer
-from mylib.osc_client import osc_client
 from copy import copy
+from threading import Lock, Thread
+from time import sleep
+
+from mylib.osc_client import osc_client
+
 
 class Satellite:
     """
@@ -23,7 +25,7 @@ class Satellite:
         self.__index = index
         self.__movement = 0.0
         self.contacts = [0.0, 0.0]
-        self.__position = position # サテライトの座標
+        self.__position = position  # サテライトの座標
 
         # OSCの送受信関連
         self.__client = osc_client()
@@ -43,7 +45,7 @@ class Satellite:
     @property
     def is_initializing(self):
         return self.__is_initializing
-    
+
     @property
     def get_distance_lock(self):
         return self.__get_distance_lock
@@ -66,7 +68,7 @@ class Satellite:
     @property
     def movement(self):
         return self.__movement
-    
+
     @property
     def position(self):
         return self.__position
@@ -146,7 +148,10 @@ class Satellite:
         if not ret:
             return None
         else:
-            return self.__calc_distance(copy(self.movement), copy(self.contacts))
+            return self.__calc_distance(
+                copy(
+                    self.movement), copy(
+                    self.contacts))
 
     @staticmethod
     def __calc_distance(movement: float, contacts: list[float]) -> float:
@@ -155,13 +160,16 @@ class Satellite:
         計算途中に値が書き換えられるのは困るのでStatic Methoadにする
         """
         if contacts[0] > 0 and contacts[1] > 0:
-            distance = movement + (1 - contacts[1]) * Satellite.RECEIVER_R + Satellite.SENDER_R
+            distance = movement + \
+                (1 - contacts[1]) * Satellite.RECEIVER_R + Satellite.SENDER_R
 
         elif contacts[0] == 0 and contacts[1] > 0:
-            distance = movement - (1 - contacts[1]) * Satellite.RECEIVER_R - Satellite.SENDER_R
+            distance = movement - \
+                (1 - contacts[1]) * Satellite.RECEIVER_R - Satellite.SENDER_R
 
         elif contacts[0] > 0 and contacts[1] == 0:
-            distance = movement + (1 - contacts[0]) * Satellite.RECEIVER_R + Satellite.SENDER_R + Satellite.RECEIVER_R
+            distance = movement + \
+                (1 - contacts[0]) * Satellite.RECEIVER_R + Satellite.SENDER_R + Satellite.RECEIVER_R
 
         else:
             return None
@@ -177,7 +185,7 @@ class Satellite:
             if self.is_initializing.locked():
                 if not self.get_distance_lock.locked():
                     self.get_distance_lock.acquire()
-            else: # self.is_initializing.locked() == False
+            else:  # self.is_initializing.locked() == False
                 # 両方のcontactが反応している場合
                 if self.contacts[0] > 0 and self.contacts[1] > 0:
                     if self.get_distance_lock.locked():
@@ -201,7 +209,7 @@ class Satellite:
                     th.join()
 
             sleep(0.01)
-    
+
     def __move_receiver_out(self):
         m = (self.movement + Satellite.RECEIVER_R / 2) / 1000
         self.client.send_message(self.movement_address, m)
@@ -209,4 +217,3 @@ class Satellite:
     def __move_receiver_in(self):
         m = (self.movement - Satellite.RECEIVER_R / 2) / 1000
         self.client.send_message(self.movement_address, m)
-
