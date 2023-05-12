@@ -273,14 +273,14 @@ def __calc_position(pos_satellites: list[float], distances: list[float]):
 
 
 def save_data(datalist: DataList):
-    l = []
+    output = []
     for data in datalist.datalist:
-        l.append(asdict(data))
+        output.append(asdict(data))
 
     now = datetime.now().strftime("%Y%m%d%H%M")
     file = f"./data_{now}.json"
     with open(file, "w", encoding="UTF-8") as f:
-        json.dump(l, f, indent=4)
+        json.dump(output, f, indent=4)
 
     print(f"file: {file} is saved")
 
