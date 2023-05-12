@@ -48,31 +48,19 @@ class DataList:
         self.__datalist.append(data)
 
     def x_data(self):
-        x_data = []
         if len(self.__datalist) == 0:
             return None
-        else:
-            for i in range(len(self.__datalist)):
-                x_data.append(self.__datalist[i].position[0])
-            return x_data
+        return [data.position[0] for data in self.__datalist]
 
     def y_data(self):
-        y_data = []
         if len(self.__datalist) == 0:
             return None
-        else:
-            for i in range(len(self.__datalist)):
-                y_data.append(self.__datalist[i].position[1])
-            return y_data
+        return [data.position[1] for data in self.__datalist]
 
     def z_data(self):
-        z_data = []
         if len(self.__datalist) == 0:
             return None
-        else:
-            for i in range(len(self.__datalist)):
-                z_data.append(self.__datalist[i].position[2])
-            return z_data
+        return [data.position[2] for data in self.__datalist]
 
 
 class PositioningSystem:
