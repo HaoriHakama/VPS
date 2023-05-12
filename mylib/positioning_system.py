@@ -10,6 +10,7 @@ from threading import Thread
 from mylib.satellite3 import Satellite
 from typing import Optional
 from dataclasses import dataclass, asdict
+from mylib import launch_osc_server
 
 @dataclass
 class PositionData:
@@ -18,7 +19,7 @@ class PositionData:
     座標はfloat 3桁でなければならない
     """
     position: list[float]
-    time:datetime = datetime.now()
+    time:datetime = datetime.now().strftime("%Y%m%d%H%M%S")
 
     def __post_init__(self):
         if not isinstance(self.position, list) or len(self.position) != 3:
@@ -79,6 +80,14 @@ class PositioningSystem:
     def __init__(self) -> None:
         self.is_mesuring = False
         self.datalist: DataList = None
+        self.server = None
+
+    def launch_positioning_system(self):
+        args = launch_osc_server.set_args()
+        dpt = launch_osc_server.set_dpt()
+        dpt.map("/avatar/parameters/VPS", self.pys_switch, dpt)
+        self.server = launch_osc_server.set_server(args, dpt)
+        self.server.serve_forever()
 
     def pys_switch(self, address: str, dpt: list[dispatcher.Dispatcher], *args: list[bool]):
         """
@@ -114,11 +123,19 @@ class PositioningSystem:
                 sleep(1)
 
         # when mesurement finish!
+        self.stop_mesurement(satellites, dpt)
+
+    def stop_mesurement(self, satellites: list[Satellite], dpt: dispatcher.Dispatcher):
         if len(self.datalist.datalist) > 0:
             save_data(self.datalist)
         self.datalist = None
-        stop_satellite_osc_handler(len(satellites), dpt)
+        launch_osc_server.server_stop(self.server)
+        th = Thread(target=del_satellite_osc_handler, args=(satellites, dpt, ))
+        th.start()
+        sleep(5)
         del_satellites(satellites)
+        launch_osc_server.server_stop(self.server)
+        self.server.serve_forever()
 
 def set_satellites_osc_handler(satellites: list[Satellite], dpt: dispatcher.Dispatcher):
     """
@@ -127,7 +144,6 @@ def set_satellites_osc_handler(satellites: list[Satellite], dpt: dispatcher.Disp
     for i in range(len(satellites)):
         address = f"/avatar/parameters/VPS/sat_{i}/*"
         func = satellites[i].osc_handler
-        print(type(dpt))
         dpt.map(address, func)
 
 def init_satellites() -> list[Satellite]:
@@ -248,7 +264,7 @@ def __calc_position(pos_satellites: list[float], distances: list[float]):
             DX = (np.linalg.inv(A.T @ A) @ A.T) @ DR
             # print(f"DX: {DX}")
             if np.inner(DX[:3], DX[:3]) < LIMIT:
-                return True, X[:3]
+                return True, X[:3].tolist()
 
             if np.isnan(X[0]):
                 break
@@ -258,7 +274,7 @@ def __calc_position(pos_satellites: list[float], distances: list[float]):
 
 def save_data(datalist: DataList):
     l = []
-    for data in datalist:
+    for data in datalist.datalist:
         l.append(asdict(data))
 
     now = datetime.now().strftime("%Y%m%d%H%M")
@@ -268,15 +284,13 @@ def save_data(datalist: DataList):
 
     print(f"file: {file} is saved")
 
-def stop_satellite_osc_handler(num_of_sat: int, dpt: dispatcher.Dispatcher):
-    for i in range(num_of_sat):
+def del_satellite_osc_handler(satellites: list[Satellite], dpt: dispatcher.Dispatcher):
+    for i in range(len(satellites)):
         address = f"/avatar/parameters/VPS/sat_{i}/*"
-        dpt.map(address, dummy_function)
+        func = satellites[i].osc_handler
+        dpt.unmap(address, func)
 
 def del_satellites(satellites: list[Satellite]):
     for satellite in satellites:
         satellite.del_is_not_called = True
         del satellite
-
-def dummy_function(address: str, *args: list):
-    pass

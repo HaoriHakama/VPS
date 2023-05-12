@@ -32,6 +32,7 @@ class Satellite:
             f"/avatar/parameters/VPS/sat_{self.index}/contact_0",
             f"/avatar/parameters/VPS/sat_{self.index}/contact_1"
         ]
+        self.client.send_message(self.movement_address, 0.0)
 
         self.start_automatic_control()
 

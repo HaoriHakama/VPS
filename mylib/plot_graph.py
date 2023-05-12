@@ -24,6 +24,7 @@ class PlotGraph:
 
     def update(self, frame):
         if self.positioning_system.datalist is not None and len(self.positioning_system.datalist.datalist) > 0:
+            self.x_data  = self.positioning_system.datalist.x_data()
             self.y_data  = self.positioning_system.datalist.y_data()
             self.z_data  = self.positioning_system.datalist.z_data()
             self.ax.clear()

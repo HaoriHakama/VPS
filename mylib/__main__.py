@@ -12,7 +12,7 @@ if __name__ == "__main__":
     positionig_system = PositioningSystem()
 
     # OSCの受信処理を開始
-    osc_thread = Thread(target=launch_osc_server, args=(positionig_system,), daemon=True)
+    osc_thread = Thread(target=positionig_system.launch_positioning_system, daemon=True)
     osc_thread.start()
 
     # グラフの描画を開始
