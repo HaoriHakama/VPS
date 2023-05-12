@@ -1,5 +1,6 @@
-import socket
 import argparse
+import socket
+
 from pythonosc import udp_client
 
 
@@ -11,8 +12,15 @@ def osc_client():
     str_ip = str(ip)
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--ip", default=str_ip, help="The ip of the OSC server")
-    parser.add_argument("--port", type=int, default=9000, help="The port of the OSC server is listening on")
+    parser.add_argument(
+        "--ip",
+        default=str_ip,
+        help="The ip of the OSC server")
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=9000,
+        help="The port of the OSC server is listening on")
 
     args = parser.parse_args()
 
