@@ -145,7 +145,7 @@ class Satellite:
         if not ret:
             return None
         else:
-            return self.__calc_distance(copy(self.contacts), copy(self.movement))
+            return self.__calc_distance(copy(self.movement), copy(self.contacts))
 
     @staticmethod
     def __calc_distance(movement: float, contacts: list[float]) -> float:

@@ -117,34 +117,8 @@ class PositioningSystem:
         if len(self.datalist.datalist) > 0:
             save_data(self.datalist)
         self.datalist = None
-        del_osc_handler(len(satellites), dpt)
+        stop_satellite_osc_handler(len(satellites), dpt)
         del_satellites(satellites)
-
-def save_data(datalist: DataList):
-    l = []
-    for data in datalist:
-        l.append(asdict(data))
-
-    now = datetime.now().strftime("%Y%m%d%H%M")
-    file = f"./data_{now}.json"
-    with open(file, "w", encoding="UTF-8") as f:
-        json.dump(l, f, indent=4)
-
-    print(f"file: {file} is saved")
-
-def del_osc_handler(num_of_sat: int, dpt: dispatcher.Dispatcher):
-    for i in range(num_of_sat):
-        address = f"/avatar/parameters/VPS/sat_{i}/*"
-        try:
-            obj = dpt._map[address]
-        except KeyError:
-            continue
-        del obj
-
-def del_satellites(satellites: list[Satellite]):
-    for satellite in satellites:
-        satellite.del_is_not_called = True
-        del satellite
 
 def set_satellites_osc_handler(satellites: list[Satellite], dpt: dispatcher.Dispatcher):
     """
@@ -281,3 +255,28 @@ def __calc_position(pos_satellites: list[float], distances: list[float]):
             X[:3] += DX[:3]
     
     return False, [None, None, None]
+
+def save_data(datalist: DataList):
+    l = []
+    for data in datalist:
+        l.append(asdict(data))
+
+    now = datetime.now().strftime("%Y%m%d%H%M")
+    file = f"./data_{now}.json"
+    with open(file, "w", encoding="UTF-8") as f:
+        json.dump(l, f, indent=4)
+
+    print(f"file: {file} is saved")
+
+def stop_satellite_osc_handler(num_of_sat: int, dpt: dispatcher.Dispatcher):
+    for i in range(num_of_sat):
+        address = f"/avatar/parameters/VPS/sat_{i}/*"
+        dpt.map(address, dummy_function)
+
+def del_satellites(satellites: list[Satellite]):
+    for satellite in satellites:
+        satellite.del_is_not_called = True
+        del satellite
+
+def dummy_function(address: str, *args: list):
+    pass
