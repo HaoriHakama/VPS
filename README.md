@@ -2,6 +2,10 @@
 * VRChat Positioning System (VPS) is an avatar gimmick to mesure player's absolute coordinates.
 
 ## 使用方法
+
+### 環境
+Python3.9以上
+
 ### アバターギミックをアバターにセットアップ
 1. アバターのUnity ProjectにModular Avatar(https://modular-avatar.nadena.dev/ja/)をインポート
 2. `VRChatPositioningSystem.unitypackage`をUnity Progjectにインポート
