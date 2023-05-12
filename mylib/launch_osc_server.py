@@ -23,7 +23,7 @@ def launch_osc_server(positioning_system: PositioningSystem):
     dpt = dispatcher.Dispatcher()
 
     dpt.map("/avatar/parameters/VPS", positioning_system.pys_switch, dpt)
-    dpt.map(f"/avatar/parameters/VPS/sat_*",
+    dpt.map("/avatar/parameters/VPS/sat_*",
             positioning_system.satellite_osc_handler)
 
     server = osc_server.ThreadingOSCUDPServer((args.ip, args.port), dpt)
