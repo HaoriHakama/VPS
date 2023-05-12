@@ -56,5 +56,5 @@ class PlotGraph:
                     self.z_data[0]))
 
     def start_plot_graph(self):
-        ani = animation.FuncAnimation(self.fig, self.update, interval=100)
+        animation.FuncAnimation(self.fig, self.update, interval=100)
         plt.show()
