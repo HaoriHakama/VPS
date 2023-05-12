@@ -10,7 +10,6 @@ from threading import Thread
 from mylib.satellite3 import Satellite
 from typing import Optional
 from dataclasses import dataclass, asdict
-from mylib import launch_osc_server
 
 @dataclass
 class PositionData:
@@ -80,14 +79,7 @@ class PositioningSystem:
     def __init__(self) -> None:
         self.is_mesuring = False
         self.datalist: DataList = None
-        self.server = None
-
-    def launch_positioning_system(self):
-        args = launch_osc_server.set_args()
-        dpt = launch_osc_server.set_dpt()
-        dpt.map("/avatar/parameters/VPS", self.pys_switch, dpt)
-        self.server = launch_osc_server.set_server(args, dpt)
-        self.server.serve_forever()
+        self.satellite: list[Satellite]
 
     def pys_switch(self, address: str, dpt: list[dispatcher.Dispatcher], *args: list[bool]):
         """
@@ -112,30 +104,32 @@ class PositioningSystem:
 
         self.datalist = DataList()
 
-        satellites = init_satellites()
-        set_satellites_osc_handler(satellites, dpt)
+        self.satellites = init_satellites()
 
         while self.is_mesuring:
-            position_data = get_position(satellites)
+            position_data = get_position(self.satellites)
             if position_data != None:
                 self.datalist.add_data(position_data)
 
                 sleep(1)
 
         # when mesurement finish!
-        self.stop_mesurement(satellites, dpt)
+        self.stop_mesurement(self.satellites, dpt)
+
+    def satellite_osc_handler(self, address: str, *args):
+        if self.is_mesuring:
+            for i in range(len(self.satellites)):
+                if f"/avatar/parameters/VPS/sat_{i}/" in address:
+                    self.satellites[i].osc_handler(address, args[0])
+        else:
+            pass
+
 
     def stop_mesurement(self, satellites: list[Satellite], dpt: dispatcher.Dispatcher):
         if len(self.datalist.datalist) > 0:
             save_data(self.datalist)
         self.datalist = None
-        launch_osc_server.server_stop(self.server)
-        th = Thread(target=del_satellite_osc_handler, args=(satellites, dpt, ))
-        th.start()
-        sleep(5)
         del_satellites(satellites)
-        launch_osc_server.server_stop(self.server)
-        self.server.serve_forever()
 
 def set_satellites_osc_handler(satellites: list[Satellite], dpt: dispatcher.Dispatcher):
     """
@@ -283,12 +277,6 @@ def save_data(datalist: DataList):
         json.dump(l, f, indent=4)
 
     print(f"file: {file} is saved")
-
-def del_satellite_osc_handler(satellites: list[Satellite], dpt: dispatcher.Dispatcher):
-    for i in range(len(satellites)):
-        address = f"/avatar/parameters/VPS/sat_{i}/*"
-        func = satellites[i].osc_handler
-        dpt.unmap(address, func)
 
 def del_satellites(satellites: list[Satellite]):
     for satellite in satellites:
