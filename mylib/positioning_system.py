@@ -1,14 +1,16 @@
-from pythonosc import dispatcher
-from datetime import datetime
 import json
-from time import sleep
-from copy import copy
-import numpy as np
 import math
+from copy import copy
+from dataclasses import asdict, dataclass
+from datetime import datetime
 from threading import Thread
-from mylib.satellite3 import Satellite
+from time import sleep
 from typing import Optional
-from dataclasses import dataclass, asdict
+
+import numpy as np
+from pythonosc import dispatcher
+
+from mylib.satellite3 import Satellite
 
 
 @dataclass
@@ -18,7 +20,7 @@ class PositionData:
     座標はfloat 3桁でなければならない
     """
     position: list[float]
-    time: datetime = datetime.now().strftime("%Y%m%d%H%M%S")
+    time: str = datetime.now().strftime("%Y%m%d%H%M%S")
 
     def __post_init__(self):
         if not isinstance(self.position, list) or len(self.position) != 3:
@@ -46,31 +48,13 @@ class DataList:
         self.__datalist.append(data)
 
     def x_data(self):
-        x_data = []
-        if len(self.__datalist) == 0:
-            return None
-        else:
-            for i in range(len(self.__datalist)):
-                x_data.append(self.__datalist[i].position[0])
-            return x_data
+        return [data.position[0] for data in self.__datalist]
 
     def y_data(self):
-        y_data = []
-        if len(self.__datalist) == 0:
-            return None
-        else:
-            for i in range(len(self.__datalist)):
-                y_data.append(self.__datalist[i].position[1])
-            return y_data
+        return [data.position[1] for data in self.__datalist]
 
     def z_data(self):
-        z_data = []
-        if len(self.__datalist) == 0:
-            return None
-        else:
-            for i in range(len(self.__datalist)):
-                z_data.append(self.__datalist[i].position[2])
-            return z_data
+        return [data.position[2] for data in self.__datalist]
 
 
 class PositioningSystem:
@@ -81,7 +65,7 @@ class PositioningSystem:
     def __init__(self) -> None:
         self.is_mesuring = False
         self.datalist: DataList = None
-        self.satellite: list[Satellite]
+        self.satellites: list[Satellite] = []
 
     def pys_switch(self,
                    address: str,
@@ -289,14 +273,14 @@ def __calc_position(pos_satellites: list[float], distances: list[float]):
 
 
 def save_data(datalist: DataList):
-    l = []
+    output = []
     for data in datalist.datalist:
-        l.append(asdict(data))
+        output.append(asdict(data))
 
     now = datetime.now().strftime("%Y%m%d%H%M")
     file = f"./data_{now}.json"
     with open(file, "w", encoding="UTF-8") as f:
-        json.dump(l, f, indent=4)
+        json.dump(output, f, indent=4)
 
     print(f"file: {file} is saved")
 

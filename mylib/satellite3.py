@@ -29,7 +29,9 @@ class Satellite:
 
         # OSCの送受信関連
         self.__client = osc_client()
-        self.__movement_address = f"/avatar/parameters/VPS/sat_{self.index}/movement"
+        self.__movement_address = (
+            f"/avatar/parameters/VPS/sat_{self.index}/movement"
+        )
         self.__contact_address = [
             f"/avatar/parameters/VPS/sat_{self.index}/contact_0",
             f"/avatar/parameters/VPS/sat_{self.index}/contact_1"
@@ -169,7 +171,8 @@ class Satellite:
 
         elif contacts[0] > 0 and contacts[1] == 0:
             distance = movement + \
-                (1 - contacts[0]) * Satellite.RECEIVER_R + Satellite.SENDER_R + Satellite.RECEIVER_R
+                (1 - contacts[0]) * Satellite.RECEIVER_R + \
+                Satellite.SENDER_R + Satellite.RECEIVER_R
 
         else:
             return None
