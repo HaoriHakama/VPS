@@ -7,7 +7,7 @@
 Python3.9以上
 
 ### アバターギミックをアバターにセットアップ
-1. アバターのUnity ProjectにModular Avatar(https://modular-avatar.nadena.dev/ja/)をインポート
+1. アバターのUnity Projectに[Modular Avatar](https://modular-avatar.nadena.dev/ja/)をインポート
 2. `VRChatPositioningSystem.unitypackage`をUnity Progjectにインポート
 3. `Assets/VRCPositioningSystem/VPS.prefab`をHierarchyのアバター直下にD & D
 4. AvatarをVRChatにアップロード
