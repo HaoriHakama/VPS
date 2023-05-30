@@ -260,7 +260,10 @@ def __calc_position(pos_satellites: list[float], distances: list[float]):
             ] for p in pos_satellites
         ])
 
-        DX = (np.linalg.inv(A.T @ A) @ A.T) @ DR
+        try:
+            DX = (np.linalg.inv(A.T @ A) @ A.T) @ DR
+        except:
+            continue
         # print(f"DX: {DX}")
         if np.inner(DX[:3], DX[:3]) < LIMIT:
             return True, X[:3].tolist()
