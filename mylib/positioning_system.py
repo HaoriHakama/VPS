@@ -141,9 +141,9 @@ def init_satellites() -> list[Satellite]:
         [50, 0, 0],
         [-50, 0, 0],
         [0, 50, 0],
-        [0, -50, 0],
-        [0, 0, 50],
-        [0, 0, -50]
+        # [0, -50, 0],
+        # [0, 0, 50],
+        # [0, 0, -50]
     ]
     for i in range(len(POS_SATELLITES)):
         satellites.append(Satellite(i, POS_SATELLITES[i]))
@@ -176,6 +176,7 @@ def __get_sat_data(satellites: Satellite):
         results[i] = satellite.get_distance()
 
     def __print_init_status(results):
+        return
         init_status = []
         for r in results:
             if r is None:

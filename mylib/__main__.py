@@ -20,5 +20,7 @@ if __name__ == "__main__":
     osc_thread.start()
 
     # グラフの描画を開始
-    graph = PlotGraph(positionig_system)
-    graph.start_plot_graph()
+    # graph = PlotGraph(positionig_system)
+    # graph.start_plot_graph()
+    while True:
+        pass
