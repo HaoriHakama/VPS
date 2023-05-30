@@ -51,9 +51,9 @@ class PlotGraph:
 
             self.text.set_text(
                 self.text_template.format(
-                    self.x_data[0],
-                    self.y_data[0],
-                    self.z_data[0]))
+                    self.x_data[-1],
+                    self.y_data[-1],
+                    self.z_data[-1]))
 
     def start_plot_graph(self):
         _ = animation.FuncAnimation(self.fig, self.update, interval=100)
